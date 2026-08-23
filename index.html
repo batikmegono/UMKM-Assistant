@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMKM AI Assistant - Asisten Bisnis Pintar</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#16a34a',
+                            600: '#15803d',
+                            700: '#166534',
+                            dark: '#0f172a'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col md:flex-row antialiased">
+
+    <!-- Custom Modal Toast -->
+    <div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300 ease-in-out max-w-sm w-full bg-emerald-600 text-white p-4 rounded-xl shadow-xl flex items-center gap-3">
+        <i id="toast-icon" class="fas fa-circle-check text-xl"></i>
+        <div class="flex-1">
+            <h4 id="toast-title" class="font-bold text-sm">Notifikasi</h4>
+            <p id="toast-msg" class="text-xs text-emerald-100">Pesan berhasil disimpan.</p>
+        </div>
+        <button onclick="hideToast()" class="text-emerald-200 hover:text-white"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div id="app" class="flex flex-col md:flex-row w-full min-h-screen">
+
+        <!-- SIDEBAR (DESKTOP) / NAV DRAWER -->
+        <aside id="sidebar" class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 hidden md:flex flex-col justify-between border-r border-slate-800 z-30">
+            <div>
+                <!-- Brand Logo -->
+                <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white text-xl font-black shadow-lg shadow-emerald-500/20">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-white text-base leading-tight">UMKM AI</h1>
+                            <span class="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase">Assistant Pro</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Info Quick Card -->
+                <div class="p-4 mx-3 my-3 bg-slate-800/60 rounded-xl border border-slate-700/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-store text-sm"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p id="sb-business-name" class="text-xs font-bold text-white truncate">Have Better Food</p>
+                            <p id="sb-business-cat" class="text-[10px] text-slate-400 truncate">Makanan & Minuman</p>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('pengaturan')" title="Edit Nama Toko" class="text-slate-400 hover:text-emerald-400 p-1.5 rounded-lg hover:bg-slate-700/50 transition-all">
+                        <i class="fas fa-pen-to-square text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Navigation Items -->
+                <nav class="px-3 space-y-1 text-sm font-medium">
+                    <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-emerald-400 bg-slate-800/80" data-tab="dashboard">
+                        <i class="fas fa-chart-line w-5 text-center"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('produk')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-slate-400" data-tab="produk">
+                        <i class="fas fa-box w-5 text-center"></i> Produk
+                    </button>
+                    <button onclick="switchTab('stok')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-slate-400" data-tab="stok">
+                        <i class="fas fa-cubes w-5 text-center"></i> Stok Barang
+                    </button>
+                    <button onclick="switchTab('penjualan')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-slate-400" data-tab="penjualan">
+                        <i class="fas fa-cash-register w-5 text-center"></i> Penjualan (POS)
+                    </button>
+                    <button onclick="switchTab('pengeluaran')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-slate-400" data-tab="pengeluaran">
+                        <i class="fas fa-wallet w-5 text-center"></i> Pengeluaran
+                    </button>
+                    <button onclick="switchTab('pelanggan')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-slate-400" data-tab="pelanggan">
+                        <i class="fas fa-users w-5 text-center"></i> Pelanggan
+                    </button>
+                    <button onclick="switchTab('laporan')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-slate-400" data-tab="laporan">
+                        <i class="fas fa-file-invoice-dollar w-5 text-center"></i> Laporan Laba/Rugi
+                    </button>
+                    <button onclick="switchTab('ai-assistant')" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-slate-400 text-teal-400 font-semibold" data-tab="ai-assistant">
+                        <span class="flex items-center gap-3"><i class="fas fa-brain w-5 text-center text-teal-400"></i> AI Assistant</span>
+                        <span class="px-2 py-0.5 text-[9px] bg-teal-500/20 text-teal-300 rounded-full border border-teal-500/30">AI</span>
+                    </button>
+                    <button onclick="switchTab('pengaturan')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition-all text-slate-400" data-tab="pengaturan">
+                        <i class="fas fa-gear w-5 text-center"></i> Pengaturan
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Sync & User Status Footer -->
+            <div class="p-4 border-t border-slate-800">
+                <div class="flex items-center justify-between mb-3 px-1 text-xs">
+                    <span class="text-slate-400 flex items-center gap-1.5">
+                        <span id="sync-dot" class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                        <span id="sync-status-text">Online</span>
+                    </span>
+                    <button onclick="toggleOfflineSim()" class="text-[10px] text-slate-400 hover:text-slate-200 underline">Ubah Mode</button>
+                </div>
+                <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-rose-900/40 hover:text-rose-400 text-slate-300 rounded-xl text-xs font-semibold transition-all">
+                    <i class="fas fa-right-from-bracket"></i> Keluar Akun
+                </button>
+            </div>
+        </aside>
+
+        <!-- MOBILE HEADER -->
+        <header class="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white text-lg font-bold">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm leading-tight">UMKM AI Assistant</h1>
+                    <p id="mob-business-name" class="text-[10px] text-emerald-400">Have Better Food</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="mob-sync-badge" class="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] rounded-full flex items-center gap-1 font-medium">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online
+                </span>
+                <button onclick="switchTab('ai-assistant')" class="w-9 h-9 bg-teal-600/30 text-teal-300 rounded-xl flex items-center justify-center text-sm border border-teal-500/30">
+                    <i class="fas fa-robot"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT CONTAINER -->
+        <main class="flex-1 bg-slate-50 overflow-y-auto pb-24 md:pb-8 p-4 md:p-8">
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="space-y-1 z-10">
+                        <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs rounded-full font-medium inline-block mb-1">
+                            <i class="fas fa-store mr-1"></i> Mode Owner (<span id="dash-biz-name">Have Better Food</span>)
+                        </span>
+                        <h2 class="text-2xl font-bold tracking-tight">Halo, Selamat Datang! 👋</h2>
+                        <p class="text-xs text-slate-300 max-w-xl leading-relaxed">Berikut adalah ringkasan kinerja performa UMKM Anda hari ini. Gunakan fitur AI Assistant untuk analisis mendalam.</p>
+                    </div>
+                    <button onclick="switchTab('ai-assistant')" class="z-10 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center gap-2 transform active:scale-95 transition-all text-sm">
+                        <i class="fas fa-robot text-lg"></i>
+                        <span>🤖 Tanya AI Assistant</span>
+                    </button>
+                </div>
+
+                <!-- Automatic AI Insights Banner -->
+                <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 text-slate-800">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-700 flex items-center gap-2">
+                            <i class="fas fa-lightbulb text-amber-500"></i> AI Insights Otomatis Hari Ini
+                        </h3>
+                        <span class="text-[10px] text-amber-600 font-medium">Update Realtime</span>
+                    </div>
+                    <div id="ai-quick-insights-container" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="bg-white/80 p-3 rounded-xl border border-amber-200/50 text-xs space-y-1">
+                            <div class="font-bold text-slate-900">📈 Omzet Stabil</div>
+                            <p class="text-slate-600 text-[11px]">Penjualan minggu ini diperkirakan naik 15% dari rata-rata bulanan.</p>
+                        </div>
+                        <div class="bg-white/80 p-3 rounded-xl border border-amber-200/50 text-xs space-y-1">
+                            <div class="font-bold text-rose-700">⚠️ Peringatan Stok</div>
+                            <p class="text-slate-600 text-[11px]">Stok <b>Sambal Ikan</b> sisa 4 unit. Segera restock untuk cegah loss sale!</p>
+                        </div>
+                        <div class="bg-white/80 p-3 rounded-xl border border-amber-200/50 text-xs space-y-1">
+                            <div class="font-bold text-emerald-700">🏆 Produk Terlaris</div>
+                            <p class="text-slate-600 text-[11px]"><b>Rengginang Udang</b> menyumbang 55% keuntungan minggu ini.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between text-slate-400">
+                            <span class="text-xs font-semibold">Omzet Hari Ini</span>
+                            <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><i class="fas fa-money-bill-wave"></i></span>
+                        </div>
+                        <div id="dash-omzet-today" class="text-lg md:text-2xl font-bold text-slate-900">Rp 450.000</div>
+                        <div class="text-[10px] text-emerald-600 font-medium"><i class="fas fa-arrow-up mr-0.5"></i> +12% vs kemarin</div>
+                    </div>
+                    <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between text-slate-400">
+                            <span class="text-xs font-semibold">Omzet Bulan Ini</span>
+                            <span class="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-sm"><i class="fas fa-calendar-alt"></i></span>
+                        </div>
+                        <div id="dash-omzet-month" class="text-lg md:text-2xl font-bold text-slate-900">Rp 8.450.000</div>
+                        <div class="text-[10px] text-slate-500">Target Rp 10.000.000</div>
+                    </div>
+                    <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between text-slate-400">
+                            <span class="text-xs font-semibold">Pengeluaran Bulan Ini</span>
+                            <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm"><i class="fas fa-arrow-trend-down"></i></span>
+                        </div>
+                        <div id="dash-expense-month" class="text-lg md:text-2xl font-bold text-slate-900">Rp 3.120.000</div>
+                        <div class="text-[10px] text-rose-600">Bahan baku & Operasional</div>
+                    </div>
+                    <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between text-slate-400">
+                            <span class="text-xs font-semibold">Estimasi Laba Bersih</span>
+                            <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm"><i class="fas fa-coins"></i></span>
+                        </div>
+                        <div id="dash-profit-month" class="text-lg md:text-2xl font-bold text-emerald-600">Rp 5.330.000</div>
+                        <div class="text-[10px] text-emerald-600 font-semibold">Margin ~63%</div>
+                    </div>
+                </div>
+
+                <!-- Sales Chart & Quick Product Status -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Chart -->
+                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 text-sm">Grafik Penjualan 7 Hari Terakhir</h3>
+                            <span class="text-xs text-slate-400">Rupiah (IDR)</span>
+                        </div>
+                        <div class="h-64 relative w-full">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Low Stock Alerts & Quick Actions -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-4">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center justify-between">
+                                <span>⚠️ Peringatan Stok Minimum</span>
+                                <span class="text-xs px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full">Perlu Restock</span>
+                            </h3>
+                            <div id="dash-low-stock-list" class="space-y-3">
+                                <!-- Dynamic Low Stock Items Inserted Here -->
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Aksi Cepat</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="openModal('modal-add-sale')" class="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+                                    <i class="fas fa-plus-circle"></i> Catat Jual
+                                </button>
+                                <button onclick="openModal('modal-add-expense')" class="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+                                    <i class="fas fa-minus-circle"></i> Pengeluaran
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: PRODUK -->
+            <section id="tab-produk" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Katalog Produk</h2>
+                        <p class="text-xs text-slate-500">Kelola produk, harga modal, harga jual, dan margin keuntungan.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-product')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fas fa-plus"></i> Tambah Produk Baru
+                    </button>
+                </div>
+
+                <!-- Products Grid -->
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic Product Cards render here -->
+                </div>
+            </section>
+
+            <!-- TAB 3: STOK -->
+            <section id="tab-stok" class="tab-content hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Manajemen Stok Barang</h2>
+                        <p class="text-xs text-slate-500">Pantau stok masuk, keluar, dan penyesuaian opname.</p>
+                    </div>
+                    <button onclick="openModal('modal-adjust-stock')" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2">
+                        <i class="fas fa-sliders"></i> Penyesuaian Stok
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 font-bold text-slate-800 text-sm">
+                        Daftar Stok & Batas Minimum
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px]">
+                                <tr>
+                                    <th class="p-3.5">Nama Produk</th>
+                                    <th class="p-3.5">Kategori</th>
+                                    <th class="p-3.5">Stok Sekarang</th>
+                                    <th class="p-3.5">Stok Min</th>
+                                    <th class="p-3.5">Status</th>
+                                    <th class="p-3.5 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-table-body" class="divide-y divide-slate-100 font-medium">
+                                <!-- Dynamic stock table rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: PENJUALAN (POS) -->
+            <section id="tab-penjualan" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Riwayat Penjualan & Kasir</h2>
+                        <p class="text-xs text-slate-500">Catat transaksi penjualan langsung dan cetak/simpan struk digital.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-sale')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2">
+                        <i class="fas fa-cash-register"></i> + Transaksi Penjualan Baru
+                    </button>
+                </div>
+
+                <!-- Table Penjualan -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px]">
+                                <tr>
+                                    <th class="p-3.5">ID Jual</th>
+                                    <th class="p-3.5">Tanggal</th>
+                                    <th class="p-3.5">Produk</th>
+                                    <th class="p-3.5">Qty</th>
+                                    <th class="p-3.5">Total Akhir</th>
+                                    <th class="p-3.5">Estimasi Laba</th>
+                                    <th class="p-3.5">Metode</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-table-body" class="divide-y divide-slate-100 font-medium">
+                                <!-- Dynamic sales rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: PENGELUARAN -->
+            <section id="tab-pengeluaran" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Catatan Pengeluaran Usaha</h2>
+                        <p class="text-xs text-slate-500">Kelola operasional, pembelian bahan baku, listrik, dan marketing.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-expense')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Catat Pengeluaran Baru
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px]">
+                                <tr>
+                                    <th class="p-3.5">Tanggal</th>
+                                    <th class="p-3.5">Kategori</th>
+                                    <th class="p-3.5">Keterangan</th>
+                                    <th class="p-3.5 text-right">Jumlah (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expense-table-body" class="divide-y divide-slate-100 font-medium">
+                                <!-- Dynamic expense rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: PELANGGAN -->
+            <section id="tab-pelanggan" class="tab-content hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Database Pelanggan</h2>
+                        <p class="text-xs text-slate-500">Simpan kontak dan histori belanja pelanggan setia Anda.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-customer')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2">
+                        <i class="fas fa-user-plus"></i> Tambah Pelanggan
+                    </button>
+                </div>
+
+                <div id="customers-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Dynamic Customers List -->
+                </div>
+            </section>
+
+            <!-- TAB 7: LAPORAN -->
+            <section id="tab-laporan" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Laporan Keuangan & Laba/Rugi</h2>
+                        <p class="text-xs text-slate-500">Ringkasan performa finansial usaha Anda.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportCSV()" class="px-3 py-2 bg-slate-800 text-white text-xs font-semibold rounded-xl flex items-center gap-2">
+                            <i class="fas fa-file-csv"></i> Ekspor CSV
+                        </button>
+                        <button onclick="window.print()" class="px-3 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-xl flex items-center gap-2">
+                            <i class="fas fa-print"></i> Cetak / PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Financial Statement Summary -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+                    <h3 class="font-bold text-slate-800 border-b pb-3 text-sm">Laporan Laba Rugi Sederhana</h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between py-1 border-b">
+                            <span class="text-slate-600">Total Penjualan Kotor (Gross Sales)</span>
+                            <span id="rep-gross" class="font-bold text-slate-900">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b text-rose-600">
+                            <span>Total Harga Pokok Penjualan (HPP / Modal Produk)</span>
+                            <span id="rep-hpp" class="font-bold">- Rp 0</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b font-bold text-emerald-700 bg-emerald-50/50 px-2 rounded">
+                            <span>Laba Kotor (Gross Profit)</span>
+                            <span id="rep-grossprofit">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b text-rose-600">
+                            <span>Total Pengeluaran Operasional & Lainnya</span>
+                            <span id="rep-expense">- Rp 0</span>
+                        </div>
+                        <div class="flex justify-between py-3 border-t-2 border-slate-900 text-sm font-black text-emerald-600">
+                            <span>ESTIMASI LABA BERSIH (NET PROFIT)</span>
+                            <span id="rep-netprofit">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 8: AI ASSISTANT -->
+            <section id="tab-ai-assistant" class="tab-content hidden space-y-4">
+                <div class="bg-gradient-to-r from-slate-900 to-teal-950 text-white p-5 rounded-2xl flex items-center justify-between shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-teal-500/20 text-teal-300 border border-teal-500/30 flex items-center justify-center text-2xl shadow-inner">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-base">AI Business Assistant</h2>
+                            <p class="text-xs text-teal-200">Asisten Bisnis Pribadi untuk UMKM "<span id="ai-biz-name-label">Have Better Food</span>"</p>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] rounded-full font-semibold">
+                        AI Engine Active
+                    </span>
+                </div>
+
+                <!-- Preset Prompts / Quick Chips -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+                    <span class="text-slate-400 font-bold text-[10px] whitespace-nowrap">Tanya Cepat:</span>
+                    <button onclick="sendQuickPrompt('Berapa omzet dan estimasi laba bersih usaha saya bulan ini?')" class="bg-white hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200 whitespace-nowrap text-[11px] shadow-sm">
+                        📊 Analisis Omzet & Laba
+                    </button>
+                    <button onclick="sendQuickPrompt('Produk mana yang paling laku dan mana yang stoknya hampir habis?')" class="bg-white hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200 whitespace-nowrap text-[11px] shadow-sm">
+                        📦 Periksa Stok & Produk Terlaris
+                    </button>
+                    <button onclick="sendQuickPrompt('Buatkan caption promo WhatsApp menarik untuk Rengginang Udang!')" class="bg-white hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200 whitespace-nowrap text-[11px] shadow-sm">
+                        💬 Buat Caption Promo WA
+                    </button>
+                    <button onclick="sendQuickPrompt('Bagaimana strategi meningkatkan margin keuntungan produk Sambal Ikan?')" class="bg-white hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200 whitespace-nowrap text-[11px] shadow-sm">
+                        💡 Strategi Naikkan Margin
+                    </button>
+                </div>
+
+                <!-- Chat Box Area -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col h-[520px] overflow-hidden">
+                    <!-- Messages Log -->
+                    <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 text-xs">
+                        <!-- Default AI Welcome Message -->
+                        <div class="flex items-start gap-3 max-w-2xl">
+                            <div class="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                AI
+                            </div>
+                            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 text-slate-800 space-y-1 shadow-sm">
+                                <p class="font-bold text-slate-900 text-xs">Halo Owner Have Better Food! 🤖</p>
+                                <p class="leading-relaxed">Saya asisten bisnis cerdas Anda. Saya telah terhubung langsung dengan data produk, penjualan, stok, dan pengeluaran Anda. Ada yang bisa saya bantu analisis hari ini?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Form -->
+                    <form onsubmit="handleAIChatSubmit(event)" class="p-3 bg-white border-t border-slate-100 flex items-center gap-2">
+                        <input id="ai-input" type="text" placeholder="Tanyakan seputar omzet, stok, atau minta buatkan strategi promo..." class="flex-1 px-4 py-2.5 text-xs bg-slate-100 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <button type="submit" id="ai-send-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 transition-all">
+                            <span>Kirim</span>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- TAB 9: PENGATURAN & SINKRONISASI -->
+            <section id="tab-pengaturan" class="tab-content hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Pengaturan Usaha & Database</h2>
+                    <p class="text-xs text-slate-500">Kelola profil usaha, mode penyimpanan hybrid, dan konfigurasi API.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4 text-xs">
+                        <h3 class="font-bold text-slate-900 border-b pb-2 text-sm flex items-center justify-between">
+                            <span>Profil Usaha & AI Server</span>
+                            <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Dapat Diubah</span>
+                        </h3>
+                        <form onsubmit="saveBusinessProfile(event)" class="space-y-3">
+                            <div>
+                                <label class="text-slate-700 font-medium block mb-1">Nama Usaha / Toko</label>
+                                <input type="text" id="setting-business-name" placeholder="Contoh: Have Better Food" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-slate-700 font-medium block mb-1">Kategori Usaha</label>
+                                <input type="text" id="setting-business-cat" placeholder="Contoh: Makanan & Minuman" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-slate-700 font-medium block mb-1">Alamat Usaha</label>
+                                <input type="text" id="setting-business-addr" placeholder="Contoh: Jl. Merdeka No. 45, Jakarta Pusat" class="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95">
+                                <i class="fas fa-floppy-disk"></i> Simpan Profil Usaha
+                            </button>
+                        </form>
+                        <div class="pt-2 border-t space-y-2">
+                            <label class="text-slate-500 block">URL Backend Proxy AI (Opsional untuk APK)</label>
+                            <input type="url" id="setting-backend-url" placeholder="https://api.usahaanda.com/v1/chat" onchange="saveBackendUrl()" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <p class="text-[10px] text-slate-400">Sembunyikan Gemini URL di APK dengan menyisipkan URL proxy backend Anda sendiri di sini.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4 text-xs">
+                        <h3 class="font-bold text-slate-900 border-b pb-2 text-sm">Status Hybrid Sync & Offline Cache</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                                <div class="flex justify-between font-bold">
+                                    <span>Penyimpanan Utama:</span>
+                                    <span class="text-emerald-600">Firebase Cloud DB</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500">Data tersimpan aman di cloud dengan isolasi hak akses per-business_id.</p>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                                <div class="flex justify-between font-bold">
+                                    <span>Penyimpanan Lokal:</span>
+                                    <span id="set-local-count" class="text-slate-700">Cache Aktif</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500">Transaksi saat offline disimulasikan dan disimpan sementara di IndexedDB/LocalStorage.</p>
+                            </div>
+                            <button onclick="simulateFullSync()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2">
+                                <i class="fas fa-rotate"></i> Sinkronkan Sekarang
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- MOBILE BOTTOM NAV BAR -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 text-slate-400 border-t border-slate-800 flex items-center justify-around py-2 px-1 z-40 text-[10px]">
+            <button onclick="switchTab('dashboard')" class="nav-mob-btn flex flex-col items-center gap-1 text-emerald-400" data-tab="dashboard">
+                <i class="fas fa-chart-line text-base"></i>
+                <span>Home</span>
+            </button>
+            <button onclick="switchTab('produk')" class="nav-mob-btn flex flex-col items-center gap-1" data-tab="produk">
+                <i class="fas fa-box text-base"></i>
+                <span>Produk</span>
+            </button>
+            <button onclick="switchTab('penjualan')" class="nav-mob-btn flex flex-col items-center gap-1" data-tab="penjualan">
+                <i class="fas fa-cash-register text-base"></i>
+                <span>Jual</span>
+            </button>
+            <button onclick="switchTab('stok')" class="nav-mob-btn flex flex-col items-center gap-1" data-tab="stok">
+                <i class="fas fa-cubes text-base"></i>
+                <span>Stok</span>
+            </button>
+            <button onclick="switchTab('ai-assistant')" class="nav-mob-btn flex flex-col items-center gap-1 text-teal-400" data-tab="ai-assistant">
+                <i class="fas fa-robot text-base"></i>
+                <span>AI</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- MODAL: TAMBAH PRODUK -->
+    <div id="modal-add-product" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Tambah Produk Baru</h3>
+                <button onclick="closeModal('modal-add-product')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleAddProduct(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Nama Produk</label>
+                    <input type="text" id="prod-name" required placeholder="Contoh: Sambal Ikan Roa" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Kategori</label>
+                        <select id="prod-cat" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="Cemilan">Cemilan</option>
+                            <option value="Lauk Pauk">Lauk Pauk</option>
+                            <option value="Bumbu & Sambal">Bumbu & Sambal</option>
+                            <option value="Minuman">Minuman</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Satuan</label>
+                        <input type="text" id="prod-unit" placeholder="Pouch / Toples / Bks" value="Pouch" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Harga Modal / HPP (Rp)</label>
+                        <input type="number" id="prod-cost" required placeholder="15000" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Harga Jual (Rp)</label>
+                        <input type="number" id="prod-price" required placeholder="25000" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Stok Awal</label>
+                        <input type="number" id="prod-stock" required placeholder="20" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Stok Minimum</label>
+                        <input type="number" id="prod-min-stock" required placeholder="5" value="5" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-add-product')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-semibold">Simpan Produk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CATAT PENJUALAN -->
+    <div id="modal-add-sale" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Catat Transaksi Penjualan</h3>
+                <button onclick="closeModal('modal-add-sale')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleAddSale(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Pilih Produk</label>
+                    <select id="sale-prod-select" onchange="calculateSaleTotal()" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Jumlah (Qty)</label>
+                        <input type="number" id="sale-qty" min="1" value="1" onchange="calculateSaleTotal()" onkeyup="calculateSaleTotal()" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">Diskon (Rp)</label>
+                        <input type="number" id="sale-discount" value="0" onchange="calculateSaleTotal()" onkeyup="calculateSaleTotal()" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Metode Pembayaran</label>
+                    <select id="sale-payment" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="Tunai / Cash">Tunai / Cash</option>
+                        <option value="QRIS / Transfer">QRIS / Transfer Bank</option>
+                    </select>
+                </div>
+                <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-emerald-700 uppercase font-bold block">Total Pembayaran</span>
+                        <span id="sale-calculated-total" class="font-bold text-emerald-800 text-base">Rp 0</span>
+                    </div>
+                    <span id="sale-calculated-profit" class="text-xs text-emerald-600 font-medium">Estimasi Laba: Rp 0</span>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-add-sale')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-semibold">Simpan & Potong Stok</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CATAT PENGELUARAN -->
+    <div id="modal-add-expense" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Catat Pengeluaran Usaha</h3>
+                <button onclick="closeModal('modal-add-expense')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleAddExpense(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Kategori Pengeluaran</label>
+                    <select id="exp-cat" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500">
+                        <option value="Bahan Baku">Bahan Baku & Kemasan</option>
+                        <option value="Operasional">Operasional Usaha</option>
+                        <option value="Listrik & Air">Listrik, Air & Gas</option>
+                        <option value="Marketing">Marketing / Iklan</option>
+                        <option value="Transportasi">Transportasi / Kurir</option>
+                        <option value="Gaji">Gaji Karyawan</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Keterangan Singkat</label>
+                    <input type="text" id="exp-desc" required placeholder="Contoh: Beli kemasan pouch 100 pcs" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500">
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Jumlah Nominal (Rp)</label>
+                    <input type="number" id="exp-amount" required placeholder="150000" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-add-expense')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded-xl font-semibold">Simpan Pengeluaran</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: TAMBAH PELANGGAN -->
+    <div id="modal-add-customer" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Tambah Pelanggan Baru</h3>
+                <button onclick="closeModal('modal-add-customer')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleAddCustomer(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Nama Pelanggan</label>
+                    <input type="text" id="cust-name" required placeholder="Budi Santoso" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Nomor WhatsApp</label>
+                    <input type="tel" id="cust-phone" required placeholder="081234567890" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Alamat</label>
+                    <input type="text" id="cust-address" placeholder="Jl. Sudirman No 12, Jakarta" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-add-customer')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold">Simpan Pelanggan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADJUST STOK -->
+    <div id="modal-adjust-stock" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Penyesuaian Stok Barang</h3>
+                <button onclick="closeModal('modal-adjust-stock')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleAdjustStock(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Pilih Produk</label>
+                    <select id="adj-prod-select" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-500">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Tipe Penyesuaian</label>
+                    <select id="adj-type" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-500">
+                        <option value="in">Stok Masuk (+ Restock)</option>
+                        <option value="out">Stok Keluar / Rusak (- Out)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Jumlah Qty</label>
+                    <input type="number" id="adj-qty" min="1" required value="10" class="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-500">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-adjust-stock')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-slate-800 text-white rounded-xl font-semibold">Update Stok</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL APP STATE & DEMO DATA FOR "Have Better Food"
+        const APP_STATE = {
+            isOnline: true,
+            pendingSyncCount: 0,
+            backendUrl: localStorage.getItem('APP_BACKEND_AI_URL') || '',
+            business: {
+                id: 'BUS-HBF-2026-99',
+                name: localStorage.getItem('APP_BUSINESS_NAME') || 'Have Better Food',
+                category: localStorage.getItem('APP_BUSINESS_CAT') || 'Makanan & Minuman',
+                address: localStorage.getItem('APP_BUSINESS_ADDR') || 'Jl. Merdeka No. 45, Jakarta Pusat'
+            },
+            // DEMO PRODUCTS FROM USER SPEC
+            products: [
+                { id: 'PROD-01', name: 'Rengginang Udang', category: 'Cemilan', unit: 'Pouch', cost: 15000, price: 25000, stock: 45, minStock: 10, image: 'https://placehold.co/300x200/10b981/ffffff?text=Rengginang+Udang' },
+                { id: 'PROD-02', name: 'Abon Ikan Tongkol', category: 'Lauk Pauk', unit: 'Toples', cost: 30000, price: 45000, stock: 18, minStock: 5, image: 'https://placehold.co/300x200/0284c7/ffffff?text=Abon+Ikan' },
+                { id: 'PROD-03', name: 'Sambal Ikan', category: 'Bumbu & Sambal', unit: 'Botol', cost: 11000, price: 20000, stock: 4, minStock: 10, image: 'https://placehold.co/300x200/e11d48/ffffff?text=Sambal+Ikan' }
+            ],
+            // MOCK TRANSACTIONS
+            sales: [
+                { id: 'SL-101', date: '2026-08-10', prodId: 'PROD-01', prodName: 'Rengginang Udang', qty: 10, price: 25000, cost: 15000, total: 250000, profit: 100000, payment: 'QRIS / Transfer' },
+                { id: 'SL-102', date: '2026-08-10', prodId: 'PROD-02', prodName: 'Abon Ikan Tongkol', qty: 4, price: 45000, cost: 30000, total: 180000, profit: 60000, payment: 'Tunai / Cash' },
+                { id: 'SL-103', date: '2026-08-09', prodId: 'PROD-03', prodName: 'Sambal Ikan', qty: 1, price: 20000, cost: 11000, total: 20000, profit: 9000, payment: 'Tunai / Cash' }
+            ],
+            // MOCK EXPENSES
+            expenses: [
+                { id: 'EX-01', date: '2026-08-08', cat: 'Bahan Baku', desc: 'Pembelian udang rebon & beras ketan', amount: 350000 },
+                { id: 'EX-02', date: '2026-08-05', cat: 'Operasional', desc: 'Stiker logo & kemasan pouch 100pcs', amount: 120000 }
+            ],
+            // MOCK CUSTOMERS
+            customers: [
+                { id: 'CUST-01', name: 'Ibu Ratna', phone: '081298765432', address: 'Tebet, Jakarta Selatan', totalSpent: 430000, count: 3 },
+                { id: 'CUST-02', name: 'Pak Hendra', phone: '085711223344', address: 'Kebayoran Baru', totalSpent: 250000, count: 1 }
+            ]
+        };
+
+        let salesChartInstance = null;
+
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAllViews();
+            initChart();
+            if (document.getElementById('setting-backend-url')) {
+                document.getElementById('setting-backend-url').value = APP_STATE.backendUrl;
+            }
+        });
+
+        function saveBackendUrl() {
+            const url = document.getElementById('setting-backend-url').value.trim();
+            APP_STATE.backendUrl = url;
+            localStorage.setItem('APP_BACKEND_AI_URL', url);
+            showToast('URL Proxy Disimpan', 'Panggilan AI akan dialihkan ke server Anda.');
+        }
+
+        function saveBusinessProfile(e) {
+            if (e) e.preventDefault();
+            const name = document.getElementById('setting-business-name').value.trim();
+            const cat = document.getElementById('setting-business-cat').value.trim();
+            const addr = document.getElementById('setting-business-addr').value.trim();
+
+            if (!name) {
+                showToast('Gagal Simpan', 'Nama usaha tidak boleh kosong.', 'error');
+                return;
+            }
+
+            APP_STATE.business.name = name;
+            APP_STATE.business.category = cat || 'Umum';
+            APP_STATE.business.address = addr || '';
+
+            localStorage.setItem('APP_BUSINESS_NAME', APP_STATE.business.name);
+            localStorage.setItem('APP_BUSINESS_CAT', APP_STATE.business.category);
+            localStorage.setItem('APP_BUSINESS_ADDR', APP_STATE.business.address);
+
+            renderAllViews();
+            showToast('Profil Diperbarui', `Nama toko berhasil diubah menjadi "${name}".`);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            const target = document.getElementById('tab-' + tabId);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.getAttribute('data-tab') === tabId) {
+                    btn.classList.add('bg-slate-800/80', 'text-white');
+                    btn.classList.remove('text-slate-400');
+                } else {
+                    btn.classList.remove('bg-slate-800/80', 'text-white');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+
+            document.querySelectorAll('.nav-mob-btn').forEach(btn => {
+                if (btn.getAttribute('data-tab') === tabId) {
+                    btn.classList.add('text-emerald-400');
+                    btn.classList.remove('text-slate-400');
+                } else {
+                    btn.classList.remove('text-emerald-400');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            if (id === 'modal-add-sale') populateSaleProducts();
+            if (id === 'modal-adjust-stock') populateStockProducts();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(title, msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => { hideToast(); }, 3500);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.add('translate-x-full');
+        }
+
+        // FORMAT CURRENCY
+        function formatRp(val) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+        }
+
+        function renderAllViews() {
+            // Update Business Name Across UI
+            const bizName = APP_STATE.business.name;
+            const bizCat = APP_STATE.business.category;
+            const bizAddr = APP_STATE.business.address;
+
+            if (document.getElementById('sb-business-name')) document.getElementById('sb-business-name').innerText = bizName;
+            if (document.getElementById('sb-business-cat')) document.getElementById('sb-business-cat').innerText = bizCat;
+            if (document.getElementById('mob-business-name')) document.getElementById('mob-business-name').innerText = bizName;
+            if (document.getElementById('dash-biz-name')) document.getElementById('dash-biz-name').innerText = bizName;
+            if (document.getElementById('ai-biz-name-label')) document.getElementById('ai-biz-name-label').innerText = bizName;
+
+            // Populate settings inputs if element exists
+            if (document.getElementById('setting-business-name')) document.getElementById('setting-business-name').value = bizName;
+            if (document.getElementById('setting-business-cat')) document.getElementById('setting-business-cat').value = bizCat;
+            if (document.getElementById('setting-business-addr')) document.getElementById('setting-business-addr').value = bizAddr;
+
+            // Dashboard Calculations
+            const todayStr = new Date().toISOString().split('T')[0];
+            const salesToday = APP_STATE.sales.reduce((acc, curr) => curr.date === todayStr ? acc + curr.total : acc, 0);
+            const salesMonth = APP_STATE.sales.reduce((acc, curr) => acc + curr.total, 0);
+            const expMonth = APP_STATE.expenses.reduce((acc, curr) => acc + curr.amount, 0);
+            const profitMonth = APP_STATE.sales.reduce((acc, curr) => acc + curr.profit, 0) - expMonth;
+
+            document.getElementById('dash-omzet-today').innerText = formatRp(salesToday);
+            document.getElementById('dash-omzet-month').innerText = formatRp(salesMonth);
+            document.getElementById('dash-expense-month').innerText = formatRp(expMonth);
+            document.getElementById('dash-profit-month').innerText = formatRp(profitMonth);
+
+            // Render Low Stock Widget
+            const lowStockItems = APP_STATE.products.filter(p => p.stock <= p.minStock);
+            const lowStockContainer = document.getElementById('dash-low-stock-list');
+            if (lowStockItems.length === 0) {
+                lowStockContainer.innerHTML = `<p class="text-xs text-slate-400 italic">Semua stok produk dalam batas aman.</p>`;
+            } else {
+                lowStockContainer.innerHTML = lowStockItems.map(p => `
+                    <div class="p-2.5 bg-rose-50 rounded-xl border border-rose-100 flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-slate-900 text-xs">${p.name}</div>
+                            <div class="text-[10px] text-rose-600 font-medium">Sisa: ${p.stock} ${p.unit} (Min: ${p.minStock})</div>
+                        </div>
+                        <button onclick="openModal('modal-adjust-stock')" class="px-2 py-1 bg-rose-600 text-white rounded-lg text-[10px] font-bold">Restock</button>
+                    </div>
+                `).join('');
+            }
+
+            // Render Products Grid
+            const prodGrid = document.getElementById('products-grid');
+            prodGrid.innerHTML = APP_STATE.products.map(p => {
+                const margin = Math.round(((p.price - p.cost) / p.price) * 100);
+                const isLow = p.stock <= p.minStock;
+                return `
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-3 relative overflow-hidden">
+                        <img src="${p.image}" class="w-full h-32 object-cover rounded-xl bg-slate-100" alt="${p.name}">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">${p.category}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isLow ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
+                                    Stok: ${p.stock} ${p.unit}
+                                </span>
+                            </div>
+                            <h3 class="font-bold text-slate-900 text-sm mt-0.5">${p.name}</h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl text-xs">
+                            <div>
+                                <span class="text-[10px] text-slate-400 block">Harga Jual</span>
+                                <span class="font-bold text-slate-900">${formatRp(p.price)}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 block">Margin Untung</span>
+                                <span class="font-bold text-emerald-600">${margin}% (${formatRp(p.price - p.cost)})</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Render Stock Table
+            const stockBody = document.getElementById('stock-table-body');
+            stockBody.innerHTML = APP_STATE.products.map(p => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3.5 font-bold text-slate-900">${p.name}</td>
+                    <td class="p-3.5 text-slate-500">${p.category}</td>
+                    <td class="p-3.5 font-bold">${p.stock} ${p.unit}</td>
+                    <td class="p-3.5 text-slate-400">${p.minStock} ${p.unit}</td>
+                    <td class="p-3.5">
+                        ${p.stock <= p.minStock ? '<span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full text-[10px] font-bold">⚠️ Hampir Habis</span>' : '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold">Aman</span>'}
+                    </td>
+                    <td class="p-3.5 text-right">
+                        <button onclick="openModal('modal-adjust-stock')" class="text-xs text-slate-600 hover:text-slate-900 font-semibold underline">Edit Stok</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Render Sales Table
+            const salesBody = document.getElementById('sales-table-body');
+            salesBody.innerHTML = APP_STATE.sales.map(s => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3.5 font-mono text-slate-400">${s.id}</td>
+                    <td class="p-3.5 text-slate-500">${s.date}</td>
+                    <td class="p-3.5 font-bold text-slate-900">${s.prodName}</td>
+                    <td class="p-3.5">${s.qty}</td>
+                    <td class="p-3.5 font-bold text-emerald-600">${formatRp(s.total)}</td>
+                    <td class="p-3.5 text-slate-600">+${formatRp(s.profit)}</td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-medium">${s.payment}</span></td>
+                </tr>
+            `).join('');
+
+            // Render Expenses Table
+            const expBody = document.getElementById('expense-table-body');
+            expBody.innerHTML = APP_STATE.expenses.map(e => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3.5 text-slate-500">${e.date}</td>
+                    <td class="p-3.5 font-semibold text-slate-800">${e.cat}</td>
+                    <td class="p-3.5 text-slate-600">${e.desc}</td>
+                    <td class="p-3.5 text-right font-bold text-rose-600">${formatRp(e.amount)}</td>
+                </tr>
+            `).join('');
+
+            // Render Customers Grid
+            const custGrid = document.getElementById('customers-grid');
+            custGrid.innerHTML = APP_STATE.customers.map(c => `
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-900 text-sm">${c.name}</span>
+                        <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold text-[10px] rounded-full">${c.count}x Belanja</span>
+                    </div>
+                    <div class="text-slate-500"><i class="fab fa-whatsapp text-emerald-500 mr-1"></i> ${c.phone}</div>
+                    <div class="text-slate-400 text-[11px]">${c.address}</div>
+                    <div class="pt-2 border-t flex justify-between font-bold">
+                        <span class="text-slate-500">Total Pembelian:</span>
+                        <span class="text-emerald-600">${formatRp(c.totalSpent)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Financial Report Statement
+            const totalGross = APP_STATE.sales.reduce((acc, curr) => acc + curr.total, 0);
+            const totalHPP = APP_STATE.sales.reduce((acc, curr) => acc + (curr.cost * curr.qty), 0);
+            const grossProfit = totalGross - totalHPP;
+            const totalExp = APP_STATE.expenses.reduce((acc, curr) => acc + curr.amount, 0);
+            const netProfit = grossProfit - totalExp;
+
+            document.getElementById('rep-gross').innerText = formatRp(totalGross);
+            document.getElementById('rep-hpp').innerText = `- ${formatRp(totalHPP)}`;
+            document.getElementById('rep-grossprofit').innerText = formatRp(grossProfit);
+            document.getElementById('rep-expense').innerText = `- ${formatRp(totalExp)}`;
+            document.getElementById('rep-netprofit').innerText = formatRp(netProfit);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            salesChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+                    datasets: [{
+                        label: 'Penjualan (IDR)',
+                        data: [150000, 320000, 210000, 450000, 600000, 850000, 450000],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { callback: value => 'Rp ' + (value / 1000) + 'k' } }
+                    }
+                }
+            });
+        }
+
+        function handleAddProduct(e) {
+            e.preventDefault();
+            const newP = {
+                id: 'PROD-' + Date.now(),
+                name: document.getElementById('prod-name').value,
+                category: document.getElementById('prod-cat').value,
+                unit: document.getElementById('prod-unit').value,
+                cost: parseFloat(document.getElementById('prod-cost').value),
+                price: parseFloat(document.getElementById('prod-price').value),
+                stock: parseInt(document.getElementById('prod-stock').value),
+                minStock: parseInt(document.getElementById('prod-min-stock').value),
+                image: `https://placehold.co/300x200/10b981/ffffff?text=${encodeURIComponent(document.getElementById('prod-name').value)}`
+            };
+
+            APP_STATE.products.push(newP);
+            closeModal('modal-add-product');
+            renderAllViews();
+            showToast('Produk Diberhasilkan', `${newP.name} berhasil ditambahkan ke katalog.`);
+            e.target.reset();
+        }
+
+        function populateSaleProducts() {
+            const select = document.getElementById('sale-prod-select');
+            select.innerHTML = APP_STATE.products.map(p => `
+                <option value="${p.id}">${p.name} (Stok: ${p.stock}) - ${formatRp(p.price)}</option>
+            `).join('');
+            calculateSaleTotal();
+        }
+
+        function calculateSaleTotal() {
+            const prodId = document.getElementById('sale-prod-select').value;
+            const qty = parseInt(document.getElementById('sale-qty').value) || 1;
+            const discount = parseFloat(document.getElementById('sale-discount').value) || 0;
+            const prod = APP_STATE.products.find(p => p.id === prodId);
+
+            if (prod) {
+                const total = Math.max(0, (prod.price * qty) - discount);
+                const profit = total - (prod.cost * qty);
+                document.getElementById('sale-calculated-total').innerText = formatRp(total);
+                document.getElementById('sale-calculated-profit').innerText = `Estimasi Laba: ${formatRp(profit)}`;
+            }
+        }
+
+        function handleAddSale(e) {
+            e.preventDefault();
+            const prodId = document.getElementById('sale-prod-select').value;
+            const qty = parseInt(document.getElementById('sale-qty').value) || 1;
+            const discount = parseFloat(document.getElementById('sale-discount').value) || 0;
+            const payment = document.getElementById('sale-payment').value;
+            const prod = APP_STATE.products.find(p => p.id === prodId);
+
+            if (!prod) return;
+            if (prod.stock < qty) {
+                showToast('Stok Tidak Cukup', `Stok ${prod.name} hanya tersisa ${prod.stock}`, 'error');
+                return;
+            }
+
+            // Deduct Stock
+            prod.stock -= qty;
+
+            const total = Math.max(0, (prod.price * qty) - discount);
+            const profit = total - (prod.cost * qty);
+
+            const newSale = {
+                id: 'SL-' + Math.floor(100 + Math.random() * 900),
+                date: new Date().toISOString().split('T')[0],
+                prodId: prod.id,
+                prodName: prod.name,
+                qty: qty,
+                price: prod.price,
+                cost: prod.cost,
+                total: total,
+                profit: profit,
+                payment: payment
+            };
+
+            APP_STATE.sales.unshift(newSale);
+            closeModal('modal-add-sale');
+            renderAllViews();
+            showToast('Penjualan Berhasil', `Transaksi Rp ${formatRp(total)} berhasil dijurnal.`);
+            e.target.reset();
+        }
+
+        function handleAddExpense(e) {
+            e.preventDefault();
+            const newExp = {
+                id: 'EX-' + Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                cat: document.getElementById('exp-cat').value,
+                desc: document.getElementById('exp-desc').value,
+                amount: parseFloat(document.getElementById('exp-amount').value)
+            };
+
+            APP_STATE.expenses.unshift(newExp);
+            closeModal('modal-add-expense');
+            renderAllViews();
+            showToast('Pengeluaran Dicatat', `Pengeluaran ${formatRp(newExp.amount)} disimpan.`);
+            e.target.reset();
+        }
+
+        function handleAddCustomer(e) {
+            e.preventDefault();
+            const newC = {
+                id: 'CUST-' + Date.now(),
+                name: document.getElementById('cust-name').value,
+                phone: document.getElementById('cust-phone').value,
+                address: document.getElementById('cust-address').value || 'Alamat Belum Diiisi',
+                totalSpent: 0,
+                count: 0
+            };
+
+            APP_STATE.customers.push(newC);
+            closeModal('modal-add-customer');
+            renderAllViews();
+            showToast('Pelanggan Baru', `${newC.name} ditambahkan ke kontak.`);
+            e.target.reset();
+        }
+
+        function populateStockProducts() {
+            const select = document.getElementById('adj-prod-select');
+            select.innerHTML = APP_STATE.products.map(p => `
+                <option value="${p.id}">${p.name} (Stok Skg: ${p.stock})</option>
+            `).join('');
+        }
+
+        function handleAdjustStock(e) {
+            e.preventDefault();
+            const prodId = document.getElementById('adj-prod-select').value;
+            const type = document.getElementById('adj-type').value;
+            const qty = parseInt(document.getElementById('adj-qty').value) || 0;
+            const prod = APP_STATE.products.find(p => p.id === prodId);
+
+            if (prod) {
+                if (type === 'in') prod.stock += qty;
+                else prod.stock = Math.max(0, prod.stock - qty);
+
+                closeModal('modal-adjust-stock');
+                renderAllViews();
+                showToast('Stok Diperbarui', `Stok ${prod.name} menjadi ${prod.stock} ${prod.unit}.`);
+            }
+        }
+
+        async function handleAIChatSubmit(e) {
+            if (e) e.preventDefault();
+            const inputEl = document.getElementById('ai-input');
+            const userMsg = inputEl.value.trim();
+            if (!userMsg) return;
+
+            // Append User Message to UI
+            appendChatMessage('user', userMsg);
+            inputEl.value = '';
+
+            // Show Thinking Indicator
+            const loadingId = appendChatMessage('ai', '⏳ Sedang menganalisis data bisnis Have Better Food...', true);
+
+            try {
+                // Context Data for Business
+                const businessContext = `
+                Anda adalah AI Business Assistant berpengalaman untuk UMKM bernama "${APP_STATE.business.name}" (Kategori: ${APP_STATE.business.category}).
+                
+                DATA FINANSIAL & STOK USAHA SANGAT RELEVAN:
+                - Daftar Produk & Stok: ${JSON.stringify(APP_STATE.products)}
+                - Total Transaksi Penjualan: ${JSON.stringify(APP_STATE.sales)}
+                - Total Pengeluaran: ${JSON.stringify(APP_STATE.expenses)}
+                - Daftar Pelanggan: ${JSON.stringify(APP_STATE.customers)}
+
+                INSTRUKSI:
+                1. Jawab berdasarkan data riil UMKM di atas.
+                2. Berikan jawaban yang ringkas, praktis, dan ramah untuk pemilik UMKM.
+                3. Gunakan Bahasa Indonesia yang sopan dan jelas.
+                `;
+
+                let aiResponse = "";
+
+                // JIKA USER MEMILIKI BACKEND PROXY (REKOMENDASI UNTUK APK BUILD)
+                if (APP_STATE.backendUrl) {
+                    const response = await fetch(APP_STATE.backendUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: userMsg,
+                            context: businessContext
+                        })
+                    });
+                    const data = await response.json();
+                    aiResponse = data?.reply || data?.response || "Tidak ada respon dari server proxy.";
+                } else {
+                    // FALLBACK LANGSUNG (UNTUK DEMO / DEV REPOSITORY)
+                    const apiKey = ""; // API Key disuntikkan runtime/proxy
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userMsg }] }],
+                        systemInstruction: { parts: [{ text: businessContext }] }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    aiResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, terjadi masalah dalam mengolah jawaban.";
+                }
+
+                removeChatMessage(loadingId);
+                appendChatMessage('ai', aiResponse);
+
+            } catch (err) {
+                console.error("AI Assistant Error:", err);
+                removeChatMessage(loadingId);
+                appendChatMessage('ai', "⚠️ Maaf, gagal menghubungi server AI. Pastikan koneksi internet atau Proxy Backend Anda sudah aktif.");
+            }
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('ai-input').value = promptText;
+            handleAIChatSubmit();
+        }
+
+        function appendChatMessage(sender, text, isLoading = false) {
+            const chatLog = document.getElementById('ai-chat-messages');
+            const msgId = 'msg-' + Date.now();
+            const isAI = sender === 'ai';
+
+            const wrapper = document.createElement('div');
+            wrapper.id = msgId;
+            wrapper.className = `flex items-start gap-3 ${isAI ? 'max-w-2xl' : 'max-w-xl ml-auto flex-row-reverse'}`;
+
+            wrapper.innerHTML = `
+                <div class="w-8 h-8 rounded-xl ${isAI ? 'bg-teal-600 text-white' : 'bg-slate-800 text-white'} flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    ${isAI ? 'AI' : 'Me'}
+                </div>
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 text-slate-800 space-y-1 shadow-sm leading-relaxed text-xs">
+                    ${text.replace(/\n/g, '<br>')}
+                </div>
+            `;
+
+            chatLog.appendChild(wrapper);
+            chatLog.scrollTop = chatLog.scrollHeight;
+            return msgId;
+        }
+
+        function removeChatMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function toggleOfflineSim() {
+            APP_STATE.isOnline = !APP_STATE.isOnline;
+            const statusText = document.getElementById('sync-status-text');
+            const dot = document.getElementById('sync-dot');
+            const mobBadge = document.getElementById('mob-sync-badge');
+
+            if (APP_STATE.isOnline) {
+                statusText.innerText = "Online";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse";
+                mobBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online`;
+                showToast("Koneksi Kembali Online", "Data lokal disinkronkan otomatis dengan Firebase Cloud.");
+            } else {
+                statusText.innerText = "Offline (Lokal)";
+                dot.className = "w-2 h-2 rounded-full bg-amber-500 inline-block";
+                mobBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Offline`;
+                showToast("Mode Offline Aktif", "Pencatatan transaksi tersimpan di cache lokal HP.", "warning");
+            }
+        }
+
+        function simulateFullSync() {
+            showToast("Sinkronisasi Berlangsung", "Menghubungkan ke server cloud...");
+            setTimeout(() => {
+                showToast("Sinkronisasi Selesai", "Semua data transaksi lokal berhasil diunggah ke Firebase.");
+            }, 1500);
+        }
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,ID Penjualan,Tanggal,Produk,Qty,Total,Laba\n";
+            APP_STATE.sales.forEach(s => {
+                csvContent += `${s.id},${s.date},${s.prodName},${s.qty},${s.total},${s.profit}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Laporan_Penjualan_${APP_STATE.business.name}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function handleLogout() {
+            showToast("Keluar Sesi", "Kembali ke layar autentikasi.");
+        }
+    </script>
+</body>
+</html>
